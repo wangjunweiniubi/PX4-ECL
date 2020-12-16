@@ -193,13 +193,34 @@ bool Ekf::initialiseFilter()
 		}
 	}
 
-	if (_baro_counter < _obs_buffer_length) {
-		// not enough baro samples accumulated
-		return false;
-	}
+	switch (_params.vdist_sensor_type) {
+	default:
 
-	// we use baro height initially and switch to GPS/range/EV finder later when it passes checks.
-	setControlBaroHeight();
+	// FALLTHROUGH
+	case VDIST_SENSOR_BARO:
+		if (_baro_counter < _obs_buffer_length) {
+			// not enough baro samples accumulated
+			return false;
+		}
+
+		setControlBaroHeight();
+		break;
+
+	case VDIST_SENSOR_GPS:
+		// TODO: require GPS height valid
+		setControlGPSHeight();
+		break;
+
+	case VDIST_SENSOR_RANGE:
+		// TODO: require valid range
+		setControlRangeHeight();
+		break;
+
+	case VDIST_SENSOR_EV:
+		// TODO: require valid EV
+		setControlEVHeight();
+		break;
+	}
 
 	if (!initialiseTilt()) {
 		return false;
