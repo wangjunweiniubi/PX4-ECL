@@ -674,12 +674,21 @@ matrix::Vector<float, 24> Ekf::getStateAtFusionHorizonAsVector() const
 	return state;
 }
 
-bool Ekf::setGlobalOrigin(const double &latitude, const double &longitude, const float &altitude)
+bool Ekf::getEkfGlobalOrigin(uint64_t &origin_time, double &latitude, double &longitude, float &origin_alt) const
+{
+	origin_time = _last_gps_origin_time_us;
+	latitude    = math::degrees(_pos_ref.lat_rad);
+	longitude   = math::degrees(_pos_ref.lon_rad);
+	origin_alt  = _gps_alt_ref;
+	return _NED_origin_initialised;
+}
+
+bool Ekf::setEkfGlobalOrigin(const double &latitude, const double &longitude, const float &altitude)
 {
 	bool current_pos_available = false;
-	double current_lat = NAN;
-	double current_lon = NAN;
-	float current_alt = NAN;
+	double current_lat = static_cast<double>(NAN);
+	double current_lon = static_cast<double>(NAN);
+	float current_alt  = NAN;
 
 	// if we are already doing aiding, correct for the change in position since the EKF started navigating
 	if (map_projection_initialized(&_pos_ref) && isHorizontalAidingActive()) {
@@ -690,6 +699,7 @@ bool Ekf::setGlobalOrigin(const double &latitude, const double &longitude, const
 
 	// reinitialize map projection to latitude, longitude, altitude, and reset position
 	if (map_projection_init_timestamped(&_pos_ref, latitude, longitude, _time_last_imu) == 0) {
+
 		if (current_pos_available) {
 			// reset horizontal position
 			Vector2f position;
